@@ -12,5 +12,5 @@ func main() {
 func cleanInput(text string) []string {
   text = strings.TrimSpace(text)
   text = strings.ToLower(text)
-  return strings.Split(text, " ")
+  return strings.Fields(text) // Use strings.Fields
 }
