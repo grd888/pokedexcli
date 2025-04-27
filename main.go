@@ -7,6 +7,8 @@ import (
   "os"
   "net/http"
   "encoding/json"
+  "io"
+  "github.com/grd888/pokedexcli/internal/pokecache"
 )
 
 type cliCommand struct {
@@ -23,8 +25,10 @@ type config struct {
 var locationAreaURL string = "https://pokeapi.co/api/v2/location-area"
 var commands map[string]cliCommand
 var conf config
+var pokeCache *pokecache.Cache
 
 func main() {
+  pokeCache = pokecache.NewCache()
   
   commands = map[string]cliCommand{
     "help": {
@@ -94,17 +98,46 @@ func commandMap(cfg *config) error {
   if cfg.Next != "" {
     url = cfg.Next
   }
+
+  // Check cache first
+  if data, ok := pokeCache.Get(url); ok {
+    var locationAreaResponse LocationAreaResponse
+    err := json.Unmarshal(data, &locationAreaResponse)
+    if err != nil {
+      return err
+    }
+    cfg.Next = locationAreaResponse.Next
+    cfg.Previous = locationAreaResponse.Previous
+
+    fmt.Println("Location Areas (from cache):")
+    for _, locationArea := range locationAreaResponse.Results {
+      fmt.Println("-", locationArea.Name)
+    }
+    return nil
+  }
+
   resp, err := http.Get(url)
   if err != nil {
     return err
   }
   defer resp.Body.Close()
 
-  var locationAreaResponse LocationAreaResponse
-  err = json.NewDecoder(resp.Body).Decode(&locationAreaResponse)
+  body, err := io.ReadAll(resp.Body)
   if err != nil {
     return err
   }
+
+  // Cache the response
+  pokeCache.Add(url, body)
+
+  var locationAreaResponse LocationAreaResponse
+  err = json.Unmarshal(body, &locationAreaResponse)
+  if err != nil {
+    return err
+  }
+
+  cfg.Next = locationAreaResponse.Next
+  cfg.Previous = locationAreaResponse.Previous
   cfg.Next = locationAreaResponse.Next
   cfg.Previous = locationAreaResponse.Previous
   for _, locationArea := range locationAreaResponse.Results {
