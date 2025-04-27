@@ -42,6 +42,11 @@ func main() {
       description: "Show location areas", 
       callback: commandMap,
     },
+    "mapb": {
+      name: "mapb", 
+      description: "Show previous location areas", 
+      callback: commandMapB,
+    },
   }
 
   scanner := bufio.NewScanner(os.Stdin)
@@ -106,7 +111,35 @@ func commandMap(cfg *config) error {
     fmt.Println(locationArea.Name)
   }
   fmt.Println()
-  
+
+  return nil
+}
+
+func commandMapB(cfg *config) error {
+  url := locationAreaURL
+  if cfg.Previous != "" {
+    url = cfg.Previous
+  } else {
+    fmt.Println("you're on the first page")
+    return nil
+  }
+  resp, err := http.Get(url)
+  if err != nil {
+    return err
+  }
+  defer resp.Body.Close()
+
+  var locationAreaResponse LocationAreaResponse
+  err = json.NewDecoder(resp.Body).Decode(&locationAreaResponse)
+  if err != nil {
+    return err
+  }
+  cfg.Next = locationAreaResponse.Next
+  cfg.Previous = locationAreaResponse.Previous
+  for _, locationArea := range locationAreaResponse.Results {
+    fmt.Println(locationArea.Name)
+  }
+  fmt.Println()
 
   return nil
 }
