@@ -1,60 +1,29 @@
 package commands
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 
 	"github.com/grd888/pokedexcli/internal/models"
 )
 
 // Map displays the location areas from the PokeAPI
 func Map(cfg *models.Config, args []string) error {
-	url := LocationAreaURL
+	pageURL := ""
 	if cfg.Next != "" {
-		url = cfg.Next
+		pageURL = cfg.Next
 	}
 
-	// Check cache first
-	if data, ok := Cache.Get(url); ok {
-		var locationAreaResponse models.LocationAreaResponse
-		err := json.Unmarshal(data, &locationAreaResponse)
-		if err != nil {
-			return err
-		}
-		cfg.Next = locationAreaResponse.Next
-		cfg.Previous = locationAreaResponse.Previous
-
-		fmt.Println("Location Areas (from cache):")
-		for _, locationArea := range locationAreaResponse.Results {
-			fmt.Println("-", locationArea.Name)
-		}
-		return nil
-	}
-
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
+	// Get location areas from the API
+	locationAreaResponse, err := APIClient.GetLocationAreas(pageURL)
 	if err != nil {
 		return err
 	}
 
-	// Cache the response
-	Cache.Add(url, body)
-
-	var locationAreaResponse models.LocationAreaResponse
-	err = json.Unmarshal(body, &locationAreaResponse)
-	if err != nil {
-		return err
-	}
-
+	// Update config with pagination URLs
 	cfg.Next = locationAreaResponse.Next
 	cfg.Previous = locationAreaResponse.Previous
+
+	// Display location areas
 	for _, locationArea := range locationAreaResponse.Results {
 		fmt.Println(locationArea.Name)
 	}
@@ -65,53 +34,22 @@ func Map(cfg *models.Config, args []string) error {
 
 // MapB displays the previous page of location areas
 func MapB(cfg *models.Config, args []string) error {
-	var url string
-	if cfg.Previous != "" {
-		url = cfg.Previous
-	} else {
+	if cfg.Previous == "" {
 		fmt.Println("you're on the first page")
 		return nil
 	}
-	
-	// Check cache first
-	if data, ok := Cache.Get(url); ok {
-		var locationAreaResponse models.LocationAreaResponse
-		err := json.Unmarshal(data, &locationAreaResponse)
-		if err != nil {
-			return err
-		}
-		cfg.Next = locationAreaResponse.Next
-		cfg.Previous = locationAreaResponse.Previous
 
-		fmt.Println("Location Areas (from cache):")
-		for _, locationArea := range locationAreaResponse.Results {
-			fmt.Println("-", locationArea.Name)
-		}
-		return nil
-	}
-	
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
+	// Get previous page of location areas from the API
+	locationAreaResponse, err := APIClient.GetLocationAreas(cfg.Previous)
 	if err != nil {
 		return err
 	}
 
-	// Cache the response
-	Cache.Add(url, body)
-
-	var locationAreaResponse models.LocationAreaResponse
-	err = json.Unmarshal(body, &locationAreaResponse)
-	if err != nil {
-		return err
-	}
-	
+	// Update config with pagination URLs
 	cfg.Next = locationAreaResponse.Next
 	cfg.Previous = locationAreaResponse.Previous
+
+	// Display location areas
 	for _, locationArea := range locationAreaResponse.Results {
 		fmt.Println(locationArea.Name)
 	}

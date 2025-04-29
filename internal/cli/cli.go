@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/grd888/pokedexcli/internal/api"
 	"github.com/grd888/pokedexcli/internal/commands"
 	"github.com/grd888/pokedexcli/internal/models"
 	"github.com/grd888/pokedexcli/internal/pokecache"
@@ -14,6 +15,7 @@ import (
 // CLI represents the Pokedex CLI application
 type CLI struct {
 	cache      *pokecache.Cache
+	apiClient  *api.Client
 	config     *models.Config
 	commands   map[string]models.Command
 }
@@ -21,11 +23,13 @@ type CLI struct {
 // NewCLI creates a new CLI instance
 func NewCLI() *CLI {
 	cache := pokecache.NewCache()
+	apiClient := api.NewClient(cache)
 	
 	cli := &CLI{
-		cache:    cache,
-		config:   models.NewConfig(),
-		commands: make(map[string]models.Command),
+		cache:     cache,
+		apiClient: apiClient,
+		config:    models.NewConfig(),
+		commands:  make(map[string]models.Command),
 	}
 	
 	// Register commands

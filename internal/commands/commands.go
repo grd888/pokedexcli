@@ -1,16 +1,14 @@
 package commands
 
 import (
+	"github.com/grd888/pokedexcli/internal/api"
 	"github.com/grd888/pokedexcli/internal/models"
 	"github.com/grd888/pokedexcli/internal/pokecache"
 )
 
 var (
-	// LocationAreaURL is the base URL for the location area API
-	LocationAreaURL = "https://pokeapi.co/api/v2/location-area"
-	
-	// Cache is the cache for API responses
-	Cache *pokecache.Cache
+	// APIClient is the client for the PokeAPI
+	APIClient *api.Client
 	
 	// CommandMap is a map of all available commands
 	CommandMap map[string]models.Command
@@ -18,7 +16,7 @@ var (
 
 // Initialize initializes the commands package
 func Initialize(cache *pokecache.Cache) map[string]models.Command {
-	Cache = cache
+	APIClient = api.NewClient(cache)
 	
 	CommandMap = map[string]models.Command{
 		"help": {

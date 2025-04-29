@@ -1,10 +1,7 @@
 package commands
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 
 	"github.com/grd888/pokedexcli/internal/models"
 )
@@ -17,47 +14,19 @@ func Explore(cfg *models.Config, args []string) error {
 	
 	locationAreaName := args[0]
 	
-	// Construct the URL for the specific location area
-	url := fmt.Sprintf("%s/%s", LocationAreaURL, locationAreaName)
-	
-	// Check cache first
-	if data, ok := Cache.Get(url); ok {
-		fmt.Printf("Exploring %s (from cache)...\n", locationAreaName)
-		return processLocationAreaData(data)
-	}
-	
 	fmt.Printf("Exploring %s...\n", locationAreaName)
 	
-	// Make the API request
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("location area '%s' not found", locationAreaName)
-	}
-	
-	body, err := io.ReadAll(resp.Body)
+	// Get location area details from the API
+	locationAreaDetails, err := APIClient.GetLocationAreaDetails(locationAreaName)
 	if err != nil {
 		return err
 	}
 	
-	// Cache the response
-	Cache.Add(url, body)
-	
-	return processLocationAreaData(body)
+	return displayLocationAreaDetails(locationAreaDetails)
 }
 
-// processLocationAreaData processes the location area data and displays Pokemon
-func processLocationAreaData(data []byte) error {
-	var locationArea models.LocationAreaDetails
-	err := json.Unmarshal(data, &locationArea)
-	if err != nil {
-		return err
-	}
-	
+// displayLocationAreaDetails displays the Pokemon in a location area
+func displayLocationAreaDetails(locationArea models.LocationAreaDetails) error {
 	fmt.Println("Found Pokemon:")
 	
 	if len(locationArea.PokemonEncounters) == 0 {
