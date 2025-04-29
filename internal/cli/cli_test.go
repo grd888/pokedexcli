@@ -1,4 +1,4 @@
-package main
+package cli
 
 import (
 	"reflect"
@@ -6,10 +6,13 @@ import (
 )
 
 func TestCleanInput(t *testing.T) {
+	// Create a CLI instance for testing
+	cli := NewCLI()
+	
 	cases := []struct {
 		input    string
 		expected []string
-		name     string // Added for t.Run
+		name     string
 	}{
 		{input: " hello world  ", expected: []string{"hello", "world"}, name: "Leading/trailing spaces"},
 		{input: " Hello World  ", expected: []string{"hello", "world"}, name: "Mixed case"},
@@ -21,9 +24,9 @@ func TestCleanInput(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) { // Use t.Run for subtests
-			actual := cleanInput(c.input)
-			if !reflect.DeepEqual(actual, c.expected) { // Use reflect.DeepEqual
+		t.Run(c.name, func(t *testing.T) {
+			actual := cli.cleanInput(c.input)
+			if !reflect.DeepEqual(actual, c.expected) {
 				t.Errorf("cleanInput(%q) == %q, want %q", c.input, actual, c.expected)
 			}
 		})
