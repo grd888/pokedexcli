@@ -49,6 +49,11 @@ func Initialize(cache *pokecache.Cache) map[string]models.Command {
 			Description: "Attempt to catch a Pokemon",
 			Callback:    Catch,
 		},
+		"inspect": {
+			Name:        "inspect",
+			Description: "View details of a caught Pokemon",
+			Callback:    Inspect,
+		},
 	}
 	
 	return CommandMap

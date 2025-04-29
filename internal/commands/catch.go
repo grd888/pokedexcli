@@ -110,15 +110,7 @@ func Catch(cfg *models.Config, args []string) error {
         CaughtPokemon[pokemonName] = caughtPokemon
 
         fmt.Printf("\n%s was caught!\n", pokemonName)
-        fmt.Printf("Base Experience: %d\n", pokemon.BaseExperience)
-        fmt.Printf("Height: %d, Weight: %d\n", pokemon.Height, pokemon.Weight)
-        fmt.Print("Types: ")
-        for i, t := range pokemon.Types {
-            if i > 0 {
-                fmt.Print(", ")
-            }
-            fmt.Print(t.Type.Name)
-        }
+        fmt.Printf("You may now inspect it with the inspect command.\n")
         fmt.Println()
         return nil
     }
