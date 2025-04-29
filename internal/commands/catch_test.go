@@ -1,11 +1,12 @@
 package commands
 
 import (
+	"math"
 	"testing"
 )
 
 func TestTryCapture(t *testing.T) {
-	// First, let's run a test to determine what values our seeds actually produce
+	// First, let's run a test to determine what values our seeds actually produce with the new algorithm
 	for i := int64(1); i <= 10; i++ {
 		seed := i
 		result := TryCapture(50, &seed) // Use a consistent base experience
@@ -23,43 +24,43 @@ func TestTryCapture(t *testing.T) {
 			name:           "Low base experience with seed 1",
 			baseExperience: 50,
 			seed:           1,
-			expected:       true, // Adjusted based on actual behavior
+			expected:       true, // Verified with new algorithm
 		},
 		{
 			name:           "Low base experience with seed 2",
 			baseExperience: 50,
 			seed:           2,
-			expected:       true, // Adjusted based on actual behavior
+			expected:       true, // Verified with new algorithm
 		},
 		{
 			name:           "High base experience with seed 3",
 			baseExperience: 500,
 			seed:           3,
-			expected:       false, // Adjusted based on actual behavior
+			expected:       false, // Verified with new algorithm
 		},
 		{
 			name:           "High base experience with seed 4",
 			baseExperience: 500,
 			seed:           4,
-			expected:       true, // Adjusted based on actual behavior
+			expected:       false, // Updated for new algorithm
 		},
 		{
 			name:           "Negative base experience (should be treated as 0)",
 			baseExperience: -10,
 			seed:           5,
-			expected:       true, // Adjusted based on actual behavior
+			expected:       false, // Updated for new algorithm
 		},
 		{
 			name:           "Very high base experience (should use min probability)",
 			baseExperience: 1000,
 			seed:           6,
-			expected:       false, // Adjusted based on actual behavior
+			expected:       false, // Verified with new algorithm
 		},
 		{
 			name:           "Very high base experience with seed 7",
 			baseExperience: 1000,
 			seed:           7,
-			expected:       false, // Adjusted based on actual behavior
+			expected:       false, // Verified with new algorithm
 		},
 	}
 
@@ -81,8 +82,8 @@ func TestTryCapture(t *testing.T) {
 func TestCaptureProbability(t *testing.T) {
 	// Constants from the TryCapture function
 	const maxBaseExperience = 608
-	const maxProbability = 0.95
-	const minProbability = 0.1
+	const maxProbability = 0.70
+	const minProbability = 0.05
 
 	testCases := []struct {
 		name           string
@@ -128,13 +129,17 @@ func TestCaptureProbability(t *testing.T) {
 			successes := 0
 			trials := 1000
 
-			// Calculate the expected probability for this base experience
-			expectedProbability := maxProbability - float64(tc.baseExperience)/float64(maxBaseExperience)*(maxProbability-minProbability)
+			// Calculate the expected probability for this base experience using the new power function
+			var expectedProbability float64
 			if tc.baseExperience < 0 {
 				expectedProbability = maxProbability
-			}
-			if expectedProbability < minProbability {
-				expectedProbability = minProbability
+			} else {
+				// Use the same formula as in TryCapture
+				expFactor := math.Pow(float64(tc.baseExperience)/float64(maxBaseExperience), 0.8)
+				expectedProbability = maxProbability - expFactor * (maxProbability - minProbability)
+				if expectedProbability < minProbability {
+					expectedProbability = minProbability
+				}
 			}
 
 			// Run the trials with different seeds
